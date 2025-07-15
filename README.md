@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Κατανομή Λογαριασμού Νερού</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 2rem; background: #f4f4f4; }
-    h1 { color: #0077cc; }
-    input { margin: 0.5rem 0; padding: 0.5rem; width: 100%; }
-    button { padding: 0.5rem 1rem; background: #0077cc; color: white; border: none; cursor: pointer; margin-top: 1rem; }
-    .result { background: white; padding: 1rem; margin-top: 1rem; border-radius: 5px; }
+    body { font-family: Arial, sans-serif; padding: 2rem; background: #f0f0f0; }
+    h1 { color: #0055aa; }
+    input { margin: 0.3rem 0; padding: 0.4rem; width: 100%; box-sizing: border-box; }
+    button { padding: 0.6rem 1rem; background: #007acc; color: white; border: none; margin-top: 1rem; cursor: pointer; }
+    .result { background: white; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+    label { font-weight: bold; margin-top: 0.6rem; display: block; }
   </style>
 </head>
 <body>
@@ -41,14 +42,22 @@
       const totalBill = parseFloat(document.getElementById('totalBill').value);
       const totalConsumption = parseFloat(document.getElementById('totalConsumption').value);
       const inputs = document.querySelectorAll('.consumption');
-      const values = Array.from(inputs).map(input => parseFloat(input.value) || 0);
+      const rawValues = Array.from(inputs).map(input => parseFloat(input.value) || 0);
+      const declaredTotal = rawValues.reduce((sum, val) => sum + val, 0);
 
-      const declaredConsumption = values.reduce((sum, val) => sum + val, 0);
-      const remainder = totalConsumption - declaredConsumption;
-      const equalShare = remainder > 0 ? remainder / values.length : 0;
-      const finalConsumptions = values.map(v => v + equalShare);
+      let adjustedValues;
 
-      const resultHTML = finalConsumptions.map((val, idx) => {
+      if (declaredTotal === 0) {
+        // Avoid division by zero
+        adjustedValues = rawValues.map(() => totalConsumption / rawValues.length);
+      } else if (declaredTotal !== totalConsumption) {
+        const diff = totalConsumption - declaredTotal;
+        adjustedValues = rawValues.map(val => val + (val / declaredTotal) * diff);
+      } else {
+        adjustedValues = rawValues;
+      }
+
+      const resultHTML = adjustedValues.map((val, idx) => {
         const share = (val / totalConsumption) * totalBill;
         return `<p><strong>Ακίνητο ${idx + 1}:</strong> Κατανάλωση: ${val.toFixed(2)} m³ — Ποσό: €${share.toFixed(2)}</p>`;
       }).join('');
